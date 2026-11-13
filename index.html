@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e6a54">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<title>Mi registro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Libro de caja: tarjetas de cuenta arriba, movimientos del mes abajo; al tocar una cuenta se abre su vista con sus botones. */
+:root{
+  --bg:#eef1ef;--surface:#ffffff;--ink:#13201b;--muted:#566660;--line:#d3dbd7;
+  --accent:#0e6a54;--accent-ink:#ffffff;--neg:#a8341f;--pos:#0e6a54;--warn:#8a5a00;--warn-bg:#f6ead2;--veil:rgba(10,18,15,.45);
+  --sans:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1513;--surface:#16211e;--ink:#e6eeea;--muted:#92a39c;--line:#27332f;
+  --accent:#4cc2a0;--accent-ink:#06150f;--neg:#ee8d78;--pos:#4cc2a0;--warn:#e8c06b;--warn-bg:#2d2610;--veil:rgba(0,0,0,.6);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1513;--surface:#16211e;--ink:#e6eeea;--muted:#92a39c;--line:#27332f;
+  --accent:#4cc2a0;--accent-ink:#06150f;--neg:#ee8d78;--pos:#4cc2a0;--warn:#e8c06b;--warn-bg:#2d2610;--veil:rgba(0,0,0,.6);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans);padding-block:20px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-size:1.35rem;margin:0;text-wrap:balance;font-weight:700}
+.estado{font-size:.8rem;color:var(--muted)}
+.estado.pend{color:var(--warn);background:var(--warn-bg);padding:3px 10px;border-radius:999px}
+.estado.mal{color:var(--neg)}
+h2{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card:hover{border-color:var(--accent)}
+.card.col{background:color-mix(in srgb,var(--c) 28%,var(--surface));border:1.5px solid var(--c)}
+.card.negro{background:#000000;border:1.5px solid #3a3a3a;color:#ffffff;--ink:#ffffff;--muted:#c9c9c9;--neg:#ee8d78;--pos:#4cc2a0}
+.card .nom{font-weight:500;overflow-wrap:anywhere}
+.card .saldo{font-size:1.15rem}
+.card .sub{font-size:.78rem;color:var(--muted)}
+.tag{display:inline-block;font-size:.7rem;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);width:fit-content}
+.tag.warn{color:var(--warn);background:var(--warn-bg);border-color:transparent}
+.neg{color:var(--neg)}.pos{color:var(--pos)}
+ul.lista{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+ul.lista li{border-bottom:1px solid var(--line)}
+ul.lista li:last-child{border-bottom:0}
+.fila{display:flex;justify-content:space-between;gap:12px;align-items:baseline;width:100%;background:none;border:0;font:inherit;color:inherit;text-align:left;padding:11px 14px;cursor:pointer}
+.fila .izq{min-width:0;display:flex;flex-direction:column}
+.fila .t1{overflow-wrap:anywhere}
+.fila .t2{font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.fila .monto{white-space:nowrap}
+.vacio{color:var(--muted);padding:16px;background:var(--surface);border:1px dashed var(--line);border-radius:10px;margin:0}
+.vacio.mal{color:var(--neg);border-color:var(--neg)}
+.btn{font:inherit;font-weight:500;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 14px;cursor:pointer}
+.btn.prim{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.peligro{color:var(--neg)}
+.btn.chico{padding:6px 12px;font-size:.85rem}
+.btn:focus-visible,.card:focus-visible,.fila:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sub{font-size:.78rem;color:var(--muted)}
+.tres{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.tres .btn{padding:14px 6px}
+.atras{align-self:flex-start;background:none;border:0;color:var(--accent);font:inherit;cursor:pointer;padding:4px 0}
+.cab{display:flex;flex-direction:column;gap:4px}
+.cab .grande{font-size:1.8rem}
+.ap{display:flex;justify-content:space-between;gap:12px;padding:9px 14px}
+.pie{display:flex;justify-content:center}
+.caja{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#velo{position:fixed;inset:0;background:var(--veil);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+#velo[hidden]{display:none}
+#hoja{background:var(--bg);width:100%;max-width:560px;max-height:92%;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+#hoja h3{margin:0;font-size:1.05rem}
+label.c{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+label.chk{display:flex;gap:8px;align-items:center;font-size:.95rem;color:var(--ink)}
+input[type=text],input[type=url],input[type=date],input[type=number],select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;width:100%;min-width:0}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.err{color:var(--neg);font-size:.85rem;min-height:1.2em}
+.acciones{display:flex;gap:8px;flex-wrap:wrap}
+.acciones .btn{flex:1}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+</style>
+<main id="app"><p class="vacio">Cargando…</p></main>
+<div id="velo" hidden><div id="hoja" role="dialog" aria-modal="true"></div></div>
+<script src="kv.js"></script>
+<script>
+(function(){
+'use strict';
+/* ====================================================================
+   Registro de Paul. Una sola app para dos lugares:
+   - En Claude (artefacto): lee y escribe la hoja con la conexión de Google Sheets.
+   - En el teléfono (app instalada): guarda sin internet y sube a la hoja
+     con el programita (Apps Script) cuando vuelve la señal.
+   Los datos personales (cuentas, categorías, colores) viven en la hoja, no aquí.
+   ==================================================================== */
+var HOJA_ID='';
+var MXN=new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'});
+function money(n){return MXN.format(n)}
+var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
+var CATS_DEF=['Comida','Súper','Otra'];
+var S={cuentas:{},deudas:{},meses:{},config:{},movs:{},view:'home',acct:null,okC:false,pend:[],fuente:null,error:'',ultima:0,sincronizando:false,sinFuente:''};
+
+function p2(n){return (n<10?'0':'')+n}
+function hoy(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
+function fechaTxt(f){var a=String(f).split('-');var d=new Date(+a[0],+a[1]-1,+a[2]);return DIAS[d.getDay()]+' '+(+a[2])+' '+MESES[+a[1]-1].slice(0,3)}
+function horaTxt(ms){return new Date(ms).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
+function h(tag,props,kids){
+  var e=document.createElement(tag);
+  if(props)for(var k in props){var v=props[k];
+    if(k==='class')e.className=v;
+    else if(k==='text')e.textContent=v;
+    else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
+    else if(v!==false&&v!=null)e.setAttribute(k,v===true?'':v);}
+  (kids||[]).forEach(function(c){if(c!=null)e.appendChild(typeof c==='string'?document.createTextNode(c):c)});
+  return e;
+}
+function parseMonto(s){var n=parseFloat(String(s).replace(/[$,\s]/g,''));return isFinite(n)?Math.round(n*100)/100:NaN}
+function newId(){return 'm'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function cats(){var c=S.config.categorias;return c&&c.lista&&c.lista.length?c.lista:CATS_DEF}
+function enTelefono(){return !(window.claude&&window.claude.use)}
+
+/* ---------------- Fuentes de datos ---------------- */
+
+// Arma el estado a partir de listas [{id, datos}].
+function desdeListas(L){
+  var o={movs:{},cuentas:{},deudas:{},meses:{},config:{}};
+  (L.movimientos||[]).forEach(function(x){o.movs[x.id]=x.datos});
+  ['cuentas','meses','config'].forEach(function(t){(L[t]||[]).forEach(function(x){o[t][x.id]=x.datos})});
+  (L.deudas||[]).forEach(function(x){o.deudas[x.id]=Object.assign({},x.datos,{id:x.id})});
+  return o;
+}
+
+// Teléfono: habla con el programita de la hoja.
+function FuenteTelefono(cfg){
+  return {
+    tipo:'telefono',
+    leer:function(){return Telefono.llamar(cfg,{accion:'leer'}).then(function(j){return desdeListas(j.datos)})},
+    escribir:function(ops){return Telefono.llamar(cfg,{accion:'escribir',ops:ops}).then(function(j){return j.hechos})}
+  };
+}
+
+// Claude: usa la conexión de Google Sheets del usuario.
+function FuenteClaude(mcp){
+  var SRV='Google Sheets',filasMov={},filasDoc={};
+  function gv(rango){
+    return mcp.callTool(SRV,'get_values',{spreadsheetId:HOJA_ID,range:rango},{cache:false}).then(function(r){
+      var p=r.payload;if(p&&p.content&&p.content.values)p=p.content;
+      return (p&&Array.isArray(p.values))?p.values:[];
+    });
+  }
+  function json(t){try{return JSON.parse(t)}catch(e){return null}}
+  function texto(v){v=v==null?'':String(v);return /^[=+\-@]/.test(v)?"'"+v:v}
+  function detalle(d){
+    if(d.tipo==='gasto')return d.categoria||'';
+    if(d.tipo==='ingreso')return d.origen||'';
+    if(d.tipo==='transferencia')return d.destino?((d.destino.tipo==='persona'?d.destino.nombre:d.destino.cuenta)||''):'';
+    if(d.tipo==='apartar')return (d.de||'libre')+' -> '+(d.a||'libre');
+    if(d.tipo==='pago')return d.deuda||'';
+    return '';
+  }
+  return {
+    tipo:'claude',
+    leer:function(){
+      var tabs=['cuentas','deudas','meses','config'];
+      return Promise.all([gv("'movimientos'!A2:H")].concat(tabs.map(function(t){return gv("'"+t+"'!A2:C")}))).then(function(R){
+        var L={movimientos:[]};filasMov={};filasDoc={};
+        R[0].forEach(function(r,i){if(!r[0])return;filasMov[r[0]]=i+2;var d=json(r[7]);if(d&&String(r[6]||'')!=='si')L.movimientos.push({id:String(r[0]),datos:d})});
+        tabs.forEach(function(t,k){filasDoc[t]={};L[t]=[];R[k+1].forEach(function(r,i){if(!r[0])return;filasDoc[t][r[0]]=i+2;var d=json(r[2]);if(d)L[t].push({id:String(r[0]),datos:d})})});
+        return desdeListas(L);
+      });
+    },
+    // Necesita una lectura previa (para saber en qué fila está cada cosa).
+    escribir:async function(ops){
+      var hechos=[],nuevos=[],idsNuevos=[];
+      async function soltarNuevos(){
+        if(!nuevos.length)return;
+        await mcp.callTool(SRV,'append_values',{spreadsheetId:HOJA_ID,range:"'movimientos'!A1",values:nuevos});
+        hechos.push.apply(hechos,idsNuevos);nuevos=[];idsNuevos=[];
+      }
+      for(var i=0;i<ops.length;i++){var o=ops[i];
+        if(o.op==='mov'){
+          if(filasMov[o.id]){hechos.push(o.opId);continue}
+          var d=o.data;filasMov[o.id]=-1;
+          nuevos.push([o.id,d.fecha||'',d.tipo||'',d.cuenta||'',Number(d.monto)||0,texto(detalle(d)),'',JSON.stringify(d)]);idsNuevos.push(o.opId);
+        }else if(o.op==='borrar'){
+          await soltarNuevos();
+          var f=filasMov[o.id];
+          if(f>0)await mcp.callTool(SRV,'update_values',{spreadsheetId:HOJA_ID,range:"'movimientos'!G"+f,values:[['si']]});
+          hechos.push(o.opId);
+        }else if(o.op==='doc'){
+          var fila=[o.id,texto(o.data.nombre||o.data.concepto||o.id),JSON.stringify(o.data)];
+          var r=(filasDoc[o.tab]||{})[o.id];
+          if(r)await mcp.callTool(SRV,'update_values',{spreadsheetId:HOJA_ID,range:"'"+o.tab+"'!A"+r+":C"+r,values:[fila]});
+          else await mcp.callTool(SRV,'append_values',{spreadsheetId:HOJA_ID,range:"'"+o.tab+"'!A1",values:[fila]});
+          hechos.push(o.opId);
+        }else hechos.push(o.opId);
+      }
+      await soltarNuevos();
+      return hechos;
+    }
+  };
+}
+
+/* ---------------- Estado, pendientes y sincronización ---------------- */
+
+function aplicar(o){S.movs=o.movs||{};S.cuentas=o.cuentas||{};S.deudas=o.deudas||{};S.meses=o.meses||{};S.config=o.config||{};S.okC=true}
+function foto(){return {movs:S.movs,cuentas:S.cuentas,deudas:S.deudas,meses:S.meses,config:S.config}}
+// Los cambios de cuentas/configuración aún no subidos se vuelven a poner encima de lo leído.
+function reaplicarDocs(){S.pend.forEach(function(o){if(o.op==='doc'){var t=o.tab==='config'?S.config:S[o.tab];if(t)t[o.id]=o.tab==='deudas'?Object.assign({},o.data,{id:o.id}):o.data}})}
+function guardarPend(){return KV.set('pend',S.pend)}
+
+function encolar(op){
+  op.opId=newId();
+  if(op.op==='doc')S.pend=S.pend.filter(function(o){return !(o.op==='doc'&&o.tab===op.tab&&o.id===op.id)});
+  S.pend.push(op);
+  guardarPend().then(function(){pedirSubida();sincronizar()});
+  KV.set('snap',foto());
+  render();
+}
+function pedirSubida(){
+  if(!enTelefono()||!('serviceWorker' in navigator))return;
+  navigator.serviceWorker.ready.then(function(reg){if(reg.sync)return reg.sync.register('subir')}).catch(function(){});
+}
+
+function mensajeError(e){
+  var c=e&&e.code;
+  if(c==='clave')return 'La clave no coincide con la de tu hoja. Revísala en "Conexión".';
+  if(c==='needs_reauth')return 'Tu conexión con Google Sheets venció. Vuelve a conectarla en claude.ai, Configuración, Conectores.';
+  if(c==='server_not_connected')return 'Google Sheets no está conectado. Agrégalo en claude.ai, Configuración, Conectores.';
+  if(c==='not_in_manifest'||c==='approval_required'||c==='consent_required')return 'Esta página necesita tu permiso para usar Google Sheets. Recarga y acepta.';
+  if(c==='server_unavailable')return 'Google Sheets no respondió. Lo intento de nuevo en un momento.';
+  if(enTelefono()&&navigator.onLine===false)return '';
+  if(enTelefono()&&e instanceof TypeError)return 'No pude conectar con tu hoja. Revisa tu señal.';
+  return 'No pude hablar con tu hoja ('+(c||(e&&e.message)||'error')+').';
+}
+
+async function sincronizar(){
+  if(!S.fuente||S.sincronizando)return;
+  if(enTelefono()&&navigator.onLine===false){render();return}
+  S.sincronizando=true;
+  try{
+    if(enTelefono())S.pend=(await KV.get('pend'))||S.pend;   // el service worker pudo haber subido algo
+    if(S.pend.length){
+      if(S.fuente.tipo==='claude')await S.fuente.leer();       // para saber las filas
+      var enviados=S.pend.slice();
+      var hechos=await S.fuente.escribir(enviados),hh={};
+      hechos.forEach(function(id){hh[id]=1});
+      var actual=enTelefono()?((await KV.get('pend'))||S.pend):S.pend;
+      S.pend=actual.filter(function(o){return !hh[o.opId]});
+      await guardarPend();
+    }
+    var o=await S.fuente.leer();
+    aplicar(o);reaplicarDocs();
+    KV.set('snap',foto());
+    S.error='';S.ultima=Date.now();
+  }catch(e){S.error=mensajeError(e)}
+  finally{S.sincronizando=false;render()}
+}
+
+/* ---------------- Cálculos (sin cambios respecto a la versión anterior) ---------------- */
+
+function allMovs(){
+  var out=[],seen={},borr={};
+  S.pend.forEach(function(o){if(o.op==='borrar')borr[o.id]=1});
+  Object.keys(S.movs).forEach(function(id){if(!borr[id])out.push({id:id,d:S.movs[id],p:false});seen[id]=1});
+  S.pend.forEach(function(o){if(o.op==='mov'&&!seen[o.id]&&!borr[o.id])out.push({id:o.id,d:o.data,p:true})});
+  out.sort(function(a,b){return a.d.fecha<b.d.fecha?1:a.d.fecha>b.d.fecha?-1:(b.d.creado||0)-(a.d.creado||0)});
+  return out;
+}
+function calc(){
+  var net={},apn={};
+  function addAp(c,a,v){if(a){var k=c+'/'+a;apn[k]=(apn[k]||0)+v}}
+  function add(c,a,v){net[c]=(net[c]||0)+v;addAp(c,a,v)}
+  allMovs().forEach(function(x){var m=x.d;
+    if(m.tipo==='apartar'){addAp(m.cuenta,m.de,-m.monto);addAp(m.cuenta,m.a,m.monto)}
+    else if(m.tipo==='pago')add(m.cuenta,m.apartado,m.sentido==='me_deben'?m.monto:-m.monto);
+    else if(m.tipo==='ingreso')add(m.cuenta,m.apartado,m.monto);
+    else if(m.tipo==='gasto')add(m.cuenta,m.apartado,-m.monto);
+    else if(m.tipo==='transferencia'){add(m.cuenta,m.apartado,-m.monto);var d=m.destino;if(d&&d.tipo==='cuenta')add(d.cuenta,d.apartado,m.monto)}
+  });
+  return {net:net,apn:apn};
+}
+function cuentasOrd(){return Object.keys(S.cuentas).filter(function(k){return S.cuentas[k].estado!=='cerrada'}).sort(function(a,b){return (S.cuentas[a].orden||99)-(S.cuentas[b].orden||99)})}
+function proxFecha(dia){
+  var n=new Date(),y=n.getFullYear(),m=n.getMonth(),t=new Date(y,m,n.getDate());
+  function en(yy,mm){var ult=new Date(yy,mm+1,0).getDate();return new Date(yy,mm,Math.min(dia,ult))}
+  var c=en(y,m);if(c<t)c=en(y,m+1);
+  return c.getDate()+' '+MESES[c.getMonth()].slice(0,3);
+}
+function libreNom(id){var cu=S.cuentas[id];return (cu&&cu.libre_nombre)||'Libre'}
+function nomCuenta(id){return S.cuentas[id]?S.cuentas[id].nombre:id}
+function nomAp(c,a){var cu=S.cuentas[c];if(!cu||!a)return '';var l=(cu.apartados||[]).filter(function(x){return x.id===a})[0];return l?l.nombre:a}
+function saldoDe(id,C){var cu=S.cuentas[id];if(!cu||cu.saldo_inicial==null)return null;return cu.saldo_inicial+(C.net[id]||0)}
+function apSum(id,C){var cu=S.cuentas[id],t=0;((cu&&cu.apartados)||[]).forEach(function(a){t+=(a.saldo_inicial||0)+(C.apn[id+'/'+a.id]||0)});return t}
+function nomDeuda(id){return S.deudas[id]?S.deudas[id].nombre:id}
+function saldoDeuda(d){var t=d.monto_inicial||0;allMovs().forEach(function(x){if(x.d.tipo==='pago'&&x.d.deuda===d.id)t-=x.d.monto});return Math.round(t*100)/100}
+function deudasOrd(dir){return Object.keys(S.deudas).map(function(k){return S.deudas[k]}).filter(function(d){return d.direccion===dir}).sort(function(a,b){return (a.orden||99)-(b.orden||99)})}
+function totDeudas(dir){var t=0;deudasOrd(dir).forEach(function(d){t+=Math.max(0,saldoDeuda(d))});return t}
+
+function saldoNode(id,C,big){
+  var cu=S.cuentas[id],s=saldoDe(id,C);
+  if(s==null){
+    var n=C.net[id]||0;
+    return [h('span',{class:'num',text:'Saldo por definir'}),h('span',{class:'sub',text:'Movimientos netos: '+money(n)})];
+  }
+  if(cu.tipo==='credito'){
+    var rc=[h('span',{class:'num '+(s<0?'neg':'pos')+(big?' grande':' saldo'),text:(s<0?'Debes ':'A favor ')+money(Math.abs(s))})];
+    if(cu.corte_dia&&cu.limite_dia)rc.push(h('span',{class:'sub',text:'Corte '+proxFecha(cu.corte_dia)+' · Límite de pago '+proxFecha(cu.limite_dia)}));
+    return rc;
+  }
+  var ap=apSum(id,C);
+  if(cu.apartados&&cu.apartados.length&&Math.abs(ap)>0.004){
+    return [h('span',{class:'num'+(big?' grande':' saldo'),text:money(s-ap)}),
+      h('span',{class:'sub',text:'Disponible · total en cuenta '+money(s)+' (apartados '+money(ap)+')'})];
+  }
+  return [h('span',{class:'num'+(big?' grande':' saldo'),text:money(s)})];
+}
+
+function descMov(m){
+  if(m.tipo==='ingreso')return 'Ingreso · '+(m.origen||'sin origen')+(m.prestamo?' · préstamo':'');
+  if(m.tipo==='gasto')return (m.categoria||'Gasto')+(m.meses?' · a '+m.meses+' meses':'')+(m.recurrente?' · recurrente':'');
+  if(m.tipo==='apartar')return 'Apartar · '+nomCuenta(m.cuenta)+' · '+(m.de?nomAp(m.cuenta,m.de):libreNom(m.cuenta))+' → '+(m.a?nomAp(m.cuenta,m.a):libreNom(m.cuenta));
+  if(m.tipo==='pago')return (m.sentido==='me_deben'?'Cobro de ':'Pago a ')+nomDeuda(m.deuda);
+  var o=nomCuenta(m.cuenta)+(m.apartado?' / '+nomAp(m.cuenta,m.apartado):'');
+  var d=m.destino||{};
+  var t=d.tipo==='persona'?(d.nombre||'otra persona'):nomCuenta(d.cuenta)+(d.apartado?' / '+nomAp(d.cuenta,d.apartado):'');
+  return 'Transferencia · '+o+' → '+t;
+}
+function signo(m,ctxCuenta){
+  if(m.tipo==='ingreso')return 1;
+  if(m.tipo==='gasto')return -1;
+  if(m.tipo==='apartar')return 0;
+  if(m.tipo==='pago')return m.sentido==='me_deben'?1:-1;
+  if(ctxCuenta&&m.destino&&m.destino.tipo==='cuenta'&&m.destino.cuenta===ctxCuenta&&m.cuenta!==ctxCuenta)return 1;
+  return ctxCuenta?-1:0;
+}
+function filaMov(x,ctxCuenta){
+  var m=x.d,sg=signo(m,ctxCuenta);
+  var t2=fechaTxt(m.fecha)+(m.nota?' · '+m.nota:'');
+  var kids=[h('span',{class:'izq'},[h('span',{class:'t1',text:descMov(m)}),h('span',{class:'t2',text:t2})]),
+    h('span',{class:'monto num '+(sg>0?'pos':sg<0?'neg':''),text:(sg>0?'+':sg<0?'−':'')+money(m.monto)})];
+  if(x.p)kids[0].appendChild(h('span',{class:'tag warn',text:'pendiente de subir'}));
+  return h('li',null,[h('button',{class:'fila',type:'button',onclick:function(){abrirDetalle(x)}},kids)]);
+}
+function delMes(list,ctxCuenta){
+  var mes=hoy().slice(0,7);
+  return list.filter(function(x){
+    if(String(x.d.fecha).slice(0,7)!==mes)return false;
+    if(!ctxCuenta)return true;
+    return x.d.cuenta===ctxCuenta||(x.d.destino&&x.d.destino.tipo==='cuenta'&&x.d.destino.cuenta===ctxCuenta);
+  });
+}
+
+/* ---------------- Pantallas ---------------- */
+
+function textoEstado(){
+  var pend=S.pend.length;
+  if(pend)return {t:pend+(pend===1?' cambio pendiente de subir':' cambios pendientes de subir')+(enTelefono()&&navigator.onLine===false?' · sin conexión':''),c:'pend'};
+  if(S.error)return {t:S.error,c:'mal'};
+  if(enTelefono()&&navigator.onLine===false)return {t:'Sin conexión · todo guardado en el teléfono',c:''};
+  if(S.sincronizando&&!S.ultima)return {t:'Leyendo tu hoja…',c:''};
+  if(S.ultima)return {t:'Al día con tu hoja · '+horaTxt(S.ultima),c:''};
+  return {t:'',c:''};
+}
+
+function render(){
+  if(S.view==='conexion'&&document.getElementById('c-url'))return;   // no borrar lo que se está escribiendo
+  var app=document.getElementById('app');
+  app.textContent='';
+  var mesNom=MESES[+hoy().slice(5,7)-1],anio=hoy().slice(0,4);
+  var est=textoEstado();
+  var top=h('header',{class:'top'},[
+    h('h1',{text:mesNom.charAt(0).toUpperCase()+mesNom.slice(1)+' '+anio}),
+    h('span',{class:'estado'+(est.c?' '+est.c:''),text:est.t})
+  ]);
+  if(S.view==='conexion'){renderConexion(app);return}
+  if(S.sinFuente){app.appendChild(top);app.appendChild(h('p',{class:'vacio mal',text:S.sinFuente}));return}
+  if(!S.okC){app.appendChild(top);app.appendChild(h('p',{class:'vacio'+(S.error?' mal':''),text:S.error||'Leyendo tu hoja…'}));pie(app);return}
+  var ids=cuentasOrd();
+  if(!ids.length){app.appendChild(top);app.appendChild(h('p',{class:'vacio',text:'Tu hoja todavía no tiene cuentas. Agrégalas en la pestaña "cuentas".'}));pie(app);return}
+  var C=calc(),list=allMovs();
+  if(S.view==='acct'&&S.cuentas[S.acct]&&S.cuentas[S.acct].estado!=='cerrada'){renderCuenta(app,top,C,list);return}
+  if(S.view==='deudas'){renderDeudas(app,top);return}
+  S.view='home';
+  app.appendChild(top);
+  var g=h('div',{class:'grid'});
+  ids.forEach(function(id){
+    var cu=S.cuentas[id];
+    var kids=[h('span',{class:'nom',text:cu.nombre})];
+    if(cu.estado==='por cancelar')kids.push(h('span',{class:'tag warn',text:'por cancelar'}));
+    saldoNode(id,C,false).forEach(function(n){kids.push(n)});
+    var col=/^#[0-9a-fA-F]{3,8}$/.test(cu.color||'')?cu.color:null;
+    g.appendChild(h('button',{class:'card'+(col?' col':''),style:col?'--c:'+col:null,type:'button',onclick:function(){S.view='acct';S.acct=id;render();window.scrollTo(0,0)}},kids));
+  });
+  g.appendChild(h('button',{class:'card negro',type:'button',onclick:function(){S.view='deudas';render();window.scrollTo(0,0)}},[
+    h('span',{class:'nom',text:'Deudas'}),
+    h('span',{class:'num neg saldo',text:'Debo '+money(totDeudas('debo'))}),
+    h('span',{class:'sub',text:'Me deben '+money(totDeudas('me_deben'))})]));
+  app.appendChild(h('section',null,[h('h2',{text:'Cuentas'}),g]));
+  var mm=delMes(list,null);
+  var sec=h('section',null,[h('h2',{text:'Movimientos de '+mesNom})]);
+  if(!mm.length)sec.appendChild(h('p',{class:'vacio',text:'Aún no hay movimientos este mes. Toca una cuenta para registrar el primero.'}));
+  else{var ul=h('ul',{class:'lista'});mm.forEach(function(x){ul.appendChild(filaMov(x,null))});sec.appendChild(ul)}
+  app.appendChild(sec);
+  pie(app);
+}
+function pie(app){
+  var b=[h('button',{class:'btn chico',type:'button',text:'Actualizar',onclick:function(){sincronizar()}})];
+  if(enTelefono())b.push(h('button',{class:'btn chico',type:'button',text:'Conexión',onclick:function(){S.view='conexion';render()}}));
+  app.appendChild(h('div',{class:'pie acciones'},b));
+}
+
+function renderConexion(app){
+  app.appendChild(h('header',{class:'top'},[h('h1',{text:'Conexión con tu hoja'})]));
+  var caja=h('div',{class:'caja'},[
+    h('p',{class:'sub',style:'margin:0',text:'Pega la dirección de tu programita (la que termina en /exec) y tu clave. Solo se hace una vez; se guardan en este teléfono.'}),
+    campo('Dirección del programita',h('input',{type:'url',id:'c-url',autocomplete:'off',placeholder:'https://script.google.com/…/exec'})),
+    campo('Clave',h('input',{type:'text',id:'c-clave',autocomplete:'off',autocapitalize:'off'})),
+    h('div',{class:'err',id:'c-err'}),
+    h('div',{class:'acciones'},[
+      S.fuente?h('button',{class:'btn',type:'button',text:'Cancelar',onclick:function(){S.view='home';render()}}):null,
+      h('button',{class:'btn prim',type:'button',text:'Conectar',onclick:guardarConexion}),
+    ])]);
+  app.appendChild(caja);
+  KV.get('servidor').then(function(c){if(c){document.getElementById('c-url').value=c.url||'';document.getElementById('c-clave').value=c.clave||''}});
+}
+async function guardarConexion(){
+  var url=document.getElementById('c-url').value.trim(),clave=document.getElementById('c-clave').value.trim(),err=document.getElementById('c-err');
+  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){err.textContent='La dirección debe empezar con https://script.google.com/ y terminar en /exec.';return}
+  if(!clave){err.textContent='Escribe la clave.';return}
+  var cfg={url:url,clave:clave};
+  err.textContent='Probando…';
+  try{await Telefono.llamar(cfg,{accion:'leer'})}
+  catch(e){err.textContent=e.code==='clave'?'La clave no coincide con la de tu hoja.':'No pude conectar. Revisa la dirección y tu señal.';return}
+  await KV.set('servidor',cfg);
+  S.fuente=FuenteTelefono(cfg);S.view='home';S.error='';render();sincronizar();
+}
+
+function msiLista(id){
+  var cu=S.cuentas[id],out=[],n0=new Date(),hoyD=new Date(n0.getFullYear(),n0.getMonth(),n0.getDate()),dia=cu.corte_dia;
+  function corteEn(y,m){var ult=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(dia,ult))}
+  Object.keys(S.meses).forEach(function(k){
+    var d=S.meses[k];if(d.cuenta!==id)return;
+    var n=d.pagos_base||0,a=String(d.base_mes).split('-'),by=+a[0],bm=+a[1]-1;
+    if(dia)for(var i=1;n<d.total_pagos;i++){if(corteEn(by,bm+i)<=hoyD)n++;else break}
+    out.push({concepto:d.concepto,cuota:d.cuota,total:d.total_pagos,hechos:n});
+  });
+  allMovs().forEach(function(x){
+    var m=x.d;if(m.tipo!=='gasto'||!m.meses||m.cuenta!==id)return;
+    var a=String(m.fecha).split('-'),pd=new Date(+a[0],+a[1]-1,+a[2]),n=0;
+    if(dia)for(var i=0;i<=m.meses+1&&n<m.meses;i++){var c=corteEn(+a[0],+a[1]-1+i);if(c<=pd)continue;if(c>hoyD)break;n++}
+    out.push({concepto:(m.categoria||'Compra')+(m.nota?' · '+m.nota:''),cuota:Math.round(m.monto/m.meses*100)/100,total:m.meses,hechos:n});
+  });
+  return out.filter(function(i){return i.total-i.hechos>0});
+}
+function seccionMsi(id){
+  var lista=msiLista(id),sec=h('section',null,[h('h2',{text:'Pagos a meses'})]);
+  if(!lista.length){sec.appendChild(h('p',{class:'vacio',text:'Sin pagos a meses pendientes.'}));return sec}
+  var ul=h('ul',{class:'lista'}),tot=0;
+  lista.forEach(function(i){
+    var falt=i.total-i.hechos,saldo=Math.round(i.cuota*falt*100)/100;tot+=saldo;
+    ul.appendChild(h('li',{class:'ap'},[
+      h('span',{class:'izq',style:'display:flex;flex-direction:column'},[h('span',{text:i.concepto}),
+        h('span',{class:'sub',text:'Pago '+i.hechos+' de '+i.total+' · faltan '+falt+' · cuota '+money(i.cuota)})]),
+      h('span',{class:'num',text:money(saldo)})]));
+  });
+  sec.appendChild(ul);
+  sec.appendChild(h('p',{class:'sub',style:'margin:8px 0 0',text:'Pendiente en meses: '+money(tot)+'. El conteo avanza solo en cada fecha de corte; si tu estado de cuenta dice otra cosa, ajústalo en la pestaña "meses" de tu hoja.'}));
+  return sec;
+}
+
+function renderCuenta(app,top,C,list){
+  var id=S.acct,cu=S.cuentas[id];
+  app.appendChild(top);
+  app.appendChild(h('button',{class:'atras',type:'button',text:'← Todas las cuentas',onclick:function(){S.view='home';render()}}));
+  var cab=h('div',{class:'cab'},[h('h1',{text:cu.nombre})]);
+  if(cu.estado==='por cancelar')cab.appendChild(h('span',{class:'tag warn',text:'por cancelar'}));
+  saldoNode(id,C,true).forEach(function(n){cab.appendChild(n)});
+  app.appendChild(cab);
+  app.appendChild(h('div',{class:'tres'},[
+    h('button',{class:'btn prim',type:'button',text:'+ Ingreso',onclick:function(){abrirForm('ingreso',id)}}),
+    h('button',{class:'btn',type:'button',text:'− Gasto',onclick:function(){abrirForm('gasto',id)}}),
+    h('button',{class:'btn',type:'button',text:'⇄ Transferencia',onclick:function(){abrirForm('transferencia',id)}}),
+    cu.tipo!=='credito'?h('button',{class:'btn',type:'button',text:'▤ Apartar',onclick:function(){abrirApartar(id)}}):null
+  ]));
+  if(cu.tipo==='credito')app.appendChild(seccionMsi(id));
+  var aps=cu.apartados||[];
+  var sec=h('section',null,[h('h2',{text:'Apartados'})]);
+  var ul=h('ul',{class:'lista'});
+  var s=saldoDe(id,C);
+  var sumAp=0;
+  aps.forEach(function(a){
+    var v=(a.saldo_inicial||0)+(C.apn[id+'/'+a.id]||0);sumAp+=v;
+    ul.appendChild(h('li',{class:'ap'},[h('span',{text:a.nombre}),h('span',{class:'num',text:money(v)})]));
+  });
+  if(s!=null&&cu.tipo!=='credito')ul.insertBefore(h('li',{class:'ap'},[h('span',{text:libreNom(id)}),h('span',{class:'num',text:money(s-sumAp)})]),ul.firstChild);
+  if(ul.children.length)sec.appendChild(ul);else sec.appendChild(h('p',{class:'vacio',text:'Esta cuenta no tiene apartados.'}));
+  sec.appendChild(h('div',{style:'margin-top:10px'},[h('button',{class:'btn',type:'button',text:'+ Apartado',onclick:function(){abrirApartado(id)}})]));
+  if(cu.tipo!=='credito')app.appendChild(sec);
+  var mm=delMes(list,id);
+  var sec2=h('section',null,[h('h2',{text:'Movimientos del mes'})]);
+  if(!mm.length)sec2.appendChild(h('p',{class:'vacio',text:'Sin movimientos este mes en esta cuenta.'}));
+  else{var u2=h('ul',{class:'lista'});mm.forEach(function(x){u2.appendChild(filaMov(x,id))});sec2.appendChild(u2)}
+  app.appendChild(sec2);
+}
+
+/* ---------------- hoja (formularios) ---------------- */
+function hoja(){return document.getElementById('hoja')}
+function abrirHoja(nodes){var H=hoja();H.textContent='';nodes.forEach(function(n){H.appendChild(n)});document.getElementById('velo').hidden=false}
+function cerrarHoja(){document.getElementById('velo').hidden=true;hoja().textContent=''}
+document.getElementById('velo').addEventListener('click',function(e){if(e.target===this)cerrarHoja()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')cerrarHoja()});
+function campo(label,input){return h('label',{class:'c'},[label,input])}
+function chk(id,label){return h('label',{class:'chk'},[h('input',{type:'checkbox',id:id}),label])}
+function val(id){var e=document.getElementById(id);return e?e.value:''}
+function on(id){var e=document.getElementById(id);return !!(e&&e.checked)}
+function selApartado(cuentaId,id,label){
+  var aps=S.cuentas[cuentaId].apartados||[];
+  if(!aps.length)return null;
+  var opts=[h('option',{value:'',text:libreNom(cuentaId)+' (sin apartado)'})];
+  aps.forEach(function(a){opts.push(h('option',{value:a.id,text:a.nombre}))});
+  return campo(label,h('select',{id:id},opts));
+}
+
+function abrirForm(tipo,cuentaId){
+  var cu=S.cuentas[cuentaId],titulo={ingreso:'Ingreso',gasto:'Gasto',transferencia:'Transferencia'}[tipo]+' · '+cu.nombre;
+  var n=[h('h3',{text:titulo}),
+    campo('Monto',h('input',{type:'text',id:'f-monto',inputmode:'decimal',autocomplete:'off',placeholder:'0.00'}))];
+  if(tipo==='ingreso'){
+    n.push(campo('De dónde salió',h('input',{type:'text',id:'f-origen',autocomplete:'off',placeholder:'Sueldo, venta, reembolso…'})));
+    n.push(chk('f-prestamo','Es un préstamo que recibí'));
+  }
+  if(tipo==='gasto'){
+    var opts=cats().map(function(c){return h('option',{value:c,text:c})});
+    opts.push(h('option',{value:'__nueva',text:'+ Agregar categoría…'}));
+    var sel=h('select',{id:'f-cat'},opts);
+    sel.addEventListener('change',function(){document.getElementById('f-catnueva-w').hidden=this.value!=='__nueva'});
+    n.push(campo('Categoría',sel));
+    var w=campo('Nombre de la categoría nueva',h('input',{type:'text',id:'f-catnueva',autocomplete:'off'}));w.id='f-catnueva-w';w.hidden=true;n.push(w);
+    n.push(chk('f-meses-on','Compra a meses'));
+    var mw=campo('Número de meses',h('input',{type:'number',id:'f-meses',min:'2',max:'48',placeholder:'6'}));mw.id='f-meses-w';mw.hidden=true;n.push(mw);
+    n.push(chk('f-rec','Es recurrente (se repite cada mes)'));
+  }
+  if(tipo!=='transferencia'){var sa=selApartado(cuentaId,'f-ap','Apartado');if(sa)n.push(sa)}
+  if(tipo==='transferencia'){
+    n.push(h('p',{class:'sub',text:'Sale del dinero libre de esta cuenta. Para mover dinero a un apartado usa "Apartar".'}));
+    var d=[h('option',{value:'',text:'Elegir destino…'})];
+    cuentasOrd().forEach(function(id){
+      if(id!==cuentaId)d.push(h('option',{value:'c:'+id+':',text:S.cuentas[id].nombre}));
+    });
+    d.push(h('option',{value:'p',text:'Otra persona…'}));
+    var ds=h('select',{id:'f-dest'},d);
+    ds.addEventListener('change',function(){document.getElementById('f-pers-w').hidden=this.value!=='p'});
+    n.push(campo('Destino',ds));
+    var pw=campo('Nombre de la persona',h('input',{type:'text',id:'f-pers',autocomplete:'off'}));pw.id='f-pers-w';pw.hidden=true;n.push(pw);
+  }
+  n.push(campo('Fecha',h('input',{type:'date',id:'f-fecha',value:hoy()})));
+  n.push(campo('Nota (opcional)',h('input',{type:'text',id:'f-nota',autocomplete:'off'})));
+  n.push(h('div',{class:'err',id:'f-err'}));
+  n.push(h('div',{class:'acciones'},[
+    h('button',{class:'btn',type:'button',text:'Cancelar',onclick:cerrarHoja}),
+    h('button',{class:'btn prim',type:'button',text:'Guardar',onclick:function(){guardar(tipo,cuentaId)}})
+  ]));
+  abrirHoja(n);
+  var cm=document.getElementById('f-meses-on');
+  if(cm)cm.addEventListener('change',function(){document.getElementById('f-meses-w').hidden=!this.checked});
+  document.getElementById('f-monto').focus();
+}
+function errF(t){document.getElementById('f-err').textContent=t}
+
+function guardar(tipo,cuentaId){
+  var monto=parseMonto(val('f-monto'));
+  if(!(monto>0))return errF('Escribe un monto mayor a cero.');
+  var fecha=val('f-fecha');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha))return errF('Elige una fecha válida.');
+  var m={fecha:fecha,cuenta:cuentaId,tipo:tipo,monto:monto,creado:Date.now()};
+  var ap=val('f-ap');if(ap)m.apartado=ap;
+  var nota=val('f-nota').trim();if(nota)m.nota=nota;
+  if(tipo==='ingreso'){
+    var o=val('f-origen').trim();if(!o)return errF('Escribe de dónde salió el ingreso.');
+    m.origen=o;if(on('f-prestamo'))m.prestamo=true;
+  }
+  if(tipo==='gasto'){
+    var c=val('f-cat');
+    if(c==='__nueva'){
+      c=val('f-catnueva').trim();if(!c)return errF('Escribe el nombre de la categoría nueva.');
+      var lista=cats().slice();
+      if(lista.indexOf(c)<0){lista.push(c);S.config.categorias={lista:lista};encolar({op:'doc',tab:'config',id:'categorias',data:{lista:lista}})}
+    }
+    m.categoria=c;
+    if(on('f-meses-on')){var k=parseInt(val('f-meses'),10);if(!(k>=2))return errF('Escribe en cuántos meses es.');m.meses=k}
+    if(on('f-rec'))m.recurrente=true;
+  }
+  if(tipo==='transferencia'){
+    var d=val('f-dest');if(!d)return errF('Elige a dónde va el dinero.');
+    if(d==='p'){var p=val('f-pers').trim();if(!p)return errF('Escribe el nombre de la persona.');m.destino={tipo:'persona',nombre:p}}
+    else{var q=d.split(':');m.destino={tipo:'cuenta',cuenta:q[1]};if(q[2])m.destino.apartado=q[2]}
+  }
+  cerrarHoja();
+  encolar({op:'mov',id:newId(),data:m});
+}
+
+function opcionesAp(cuentaId,C){
+  var cu=S.cuentas[cuentaId],s=saldoDe(cuentaId,C),ap=apSum(cuentaId,C);
+  var o=[h('option',{value:'',text:libreNom(cuentaId)+(s!=null?' ('+money(s-ap)+')':'')})];
+  (cu.apartados||[]).forEach(function(a){o.push(h('option',{value:a.id,text:a.nombre+' ('+money((a.saldo_inicial||0)+(C.apn[cuentaId+'/'+a.id]||0))+')'}))});
+  return o;
+}
+function abrirApartar(cuentaId){
+  var cu=S.cuentas[cuentaId],C=calc();
+  if(!(cu.apartados||[]).length){
+    abrirHoja([h('h3',{text:'Apartar · '+cu.nombre}),h('p',{text:'Esta cuenta no tiene apartados. Crea uno con "+ Apartado".'}),
+      h('div',{class:'acciones'},[h('button',{class:'btn',type:'button',text:'Cerrar',onclick:cerrarHoja})])]);
+    return;
+  }
+  var sa=h('select',{id:'f-de'},opcionesAp(cuentaId,C)),sb=h('select',{id:'f-a'},opcionesAp(cuentaId,C));
+  sb.selectedIndex=1;
+  abrirHoja([h('h3',{text:'Apartar · '+cu.nombre}),
+    h('p',{class:'sub',text:'Mueve dinero dentro de esta cuenta: de Libre a un apartado, de un apartado a Libre o entre apartados. El total de la cuenta no cambia.'}),
+    campo('Monto',h('input',{type:'text',id:'f-monto',inputmode:'decimal',autocomplete:'off',placeholder:'0.00'})),
+    campo('Sale de',sa),campo('Va a',sb),
+    campo('Fecha',h('input',{type:'date',id:'f-fecha',value:hoy()})),
+    campo('Nota (opcional)',h('input',{type:'text',id:'f-nota',autocomplete:'off'})),
+    h('div',{class:'err',id:'f-err'}),
+    h('div',{class:'acciones'},[
+      h('button',{class:'btn',type:'button',text:'Cancelar',onclick:cerrarHoja}),
+      h('button',{class:'btn prim',type:'button',text:'Guardar',onclick:function(){guardarApartar(cuentaId)}})
+    ])]);
+  document.getElementById('f-monto').focus();
+}
+function guardarApartar(cuentaId){
+  var monto=parseMonto(val('f-monto'));
+  if(!(monto>0))return errF('Escribe un monto mayor a cero.');
+  var fecha=val('f-fecha');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha))return errF('Elige una fecha válida.');
+  var de=val('f-de'),a=val('f-a');
+  if(de===a)return errF('El origen y el destino son el mismo.');
+  var C=calc(),s=saldoDe(cuentaId,C);
+  if(s!=null){
+    var disp=de?((S.cuentas[cuentaId].apartados||[]).filter(function(x){return x.id===de})[0].saldo_inicial||0)+(C.apn[cuentaId+'/'+de]||0):s-apSum(cuentaId,C);
+    if(monto>disp+0.004)return errF('El origen solo tiene '+money(disp)+'.');
+  }
+  var m={fecha:fecha,cuenta:cuentaId,tipo:'apartar',de:de,a:a,monto:monto,creado:Date.now()};
+  var nota=val('f-nota').trim();if(nota)m.nota=nota;
+  cerrarHoja();
+  encolar({op:'mov',id:newId(),data:m});
+}
+
+function renderDeudas(app,top){
+  app.appendChild(top);
+  app.appendChild(h('button',{class:'atras',type:'button',text:'← Todas las cuentas',onclick:function(){S.view='home';render()}}));
+  app.appendChild(h('div',{class:'cab'},[h('h1',{text:'Deudas'}),
+    h('span',{class:'num neg grande',text:'Debo '+money(totDeudas('debo'))}),
+    h('span',{class:'sub',text:'Me deben '+money(totDeudas('me_deben'))+' · sin tarjetas de crédito'})]));
+  [['debo','Debo'],['me_deben','Me deben']].forEach(function(p){
+    var lista=deudasOrd(p[0]);
+    var sec=h('section',null,[h('h2',{text:p[1]})]);
+    if(!lista.length)sec.appendChild(h('p',{class:'vacio',text:'Nada por aquí.'}));
+    else{
+      var ul=h('ul',{class:'lista'});
+      lista.forEach(function(d){
+        var sd=saldoDeuda(d),liq=sd<=0.004;
+        var izq=[h('span',{class:'t1',text:d.nombre}),h('span',{class:'t2',text:d.concepto||''})];
+        if(liq)izq.push(h('span',{class:'tag',text:'liquidada'}));
+        ul.appendChild(h('li',null,[h('button',{class:'fila',type:'button',onclick:function(){if(!liq)abrirPago(d)}},[
+          h('span',{class:'izq'},izq),
+          h('span',{class:'monto num '+(p[0]==='debo'?'neg':'pos'),text:money(Math.max(0,sd))})])]));
+      });
+      sec.appendChild(ul);
+      sec.appendChild(h('p',{class:'sub',style:'margin:8px 0 0',text:p[0]==='debo'?'Toca una deuda para registrar un pago.':'Toca una cuenta por cobrar para registrar un cobro.'}));
+    }
+    app.appendChild(sec);
+  });
+  app.appendChild(h('p',{class:'sub',text:'Cada pago o cobro baja el saldo y se registra como movimiento en la cuenta elegida.'}));
+}
+function abrirPago(d){
+  var debo=d.direccion==='debo';
+  var cs=cuentasOrd().filter(function(id){return S.cuentas[id].tipo!=='credito'});
+  var selC=h('select',{id:'f-cta'},cs.map(function(id){return h('option',{value:id,text:nomCuenta(id)})}));
+  var apw=h('div',{id:'f-apw'});
+  function pintaAp(){apw.textContent='';var sa=selApartado(selC.value,'f-ap','Apartado');if(sa)apw.appendChild(sa)}
+  selC.addEventListener('change',pintaAp);
+  var sd=saldoDeuda(d);
+  abrirHoja([h('h3',{text:(debo?'Pagué a ':'Cobré a ')+d.nombre}),
+    h('p',{class:'sub',text:(d.concepto?d.concepto+' · ':'')+'saldo actual '+money(sd)}),
+    campo('Monto',h('input',{type:'text',id:'f-monto',inputmode:'decimal',autocomplete:'off',placeholder:'0.00'})),
+    campo(debo?'Sale de la cuenta':'Entra a la cuenta',selC),apw,
+    campo('Fecha',h('input',{type:'date',id:'f-fecha',value:hoy()})),
+    campo('Nota (opcional)',h('input',{type:'text',id:'f-nota',autocomplete:'off'})),
+    h('div',{class:'err',id:'f-err'}),
+    h('div',{class:'acciones'},[
+      h('button',{class:'btn',type:'button',text:'Cancelar',onclick:cerrarHoja}),
+      h('button',{class:'btn prim',type:'button',text:'Guardar',onclick:function(){guardarPago(d)}})
+    ])]);
+  pintaAp();
+  document.getElementById('f-monto').focus();
+}
+function guardarPago(d){
+  var monto=parseMonto(val('f-monto'));
+  if(!(monto>0))return errF('Escribe un monto mayor a cero.');
+  if(monto>saldoDeuda(d)+0.004)return errF('El monto es mayor al saldo de la deuda ('+money(saldoDeuda(d))+').');
+  var fecha=val('f-fecha');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha))return errF('Elige una fecha válida.');
+  var m={fecha:fecha,cuenta:val('f-cta'),tipo:'pago',deuda:d.id,sentido:d.direccion,monto:monto,creado:Date.now()};
+  var ap=val('f-ap');if(ap)m.apartado=ap;
+  var nota=val('f-nota').trim();if(nota)m.nota=nota;
+  cerrarHoja();
+  encolar({op:'mov',id:newId(),data:m});
+}
+
+function abrirApartado(cuentaId){
+  abrirHoja([h('h3',{text:'Nuevo apartado · '+S.cuentas[cuentaId].nombre}),
+    campo('Nombre',h('input',{type:'text',id:'f-apn',autocomplete:'off',placeholder:'Colchón, Seguro…'})),
+    h('div',{class:'err',id:'f-err'}),
+    h('div',{class:'acciones'},[
+      h('button',{class:'btn',type:'button',text:'Cancelar',onclick:cerrarHoja}),
+      h('button',{class:'btn prim',type:'button',text:'Crear',onclick:function(){
+        var nom=val('f-apn').trim();if(!nom)return errF('Escribe un nombre.');
+        var cu=Object.assign({},S.cuentas[cuentaId]);
+        cu.apartados=(cu.apartados||[]).concat([{id:'a'+Date.now().toString(36),nombre:nom,saldo_inicial:0}]);
+        S.cuentas[cuentaId]=cu;
+        cerrarHoja();
+        encolar({op:'doc',tab:'cuentas',id:cuentaId,data:cu});
+      }})
+    ])]);
+  document.getElementById('f-apn').focus();
+}
+
+function abrirDetalle(x){
+  var m=x.d,rows=[
+    h('h3',{text:descMov(m)}),
+    h('p',{class:'num',text:money(m.monto)+' · '+fechaTxt(m.fecha)})
+  ];
+  if(m.nota)rows.push(h('p',{text:m.nota}));
+  if(x.p)rows.push(h('p',{class:'estado',text:'Este movimiento todavía no se sube a tu hoja.'}));
+  rows.push(h('div',{class:'err',id:'f-err'}));
+  var conf=false;
+  var bd=h('button',{class:'btn peligro',type:'button',text:'Borrar movimiento'});
+  bd.addEventListener('click',function(){
+    if(!conf){conf=true;bd.textContent='Toca de nuevo para confirmar el borrado';return}
+    cerrarHoja();
+    if(x.p){
+      S.pend=S.pend.filter(function(o){return !(o.op==='mov'&&o.id===x.id)});
+      guardarPend();render();return;
+    }
+    delete S.movs[x.id];
+    encolar({op:'borrar',id:x.id});
+  });
+  rows.push(h('div',{class:'acciones'},[h('button',{class:'btn',type:'button',text:'Cerrar',onclick:cerrarHoja}),bd]));
+  abrirHoja(rows);
+}
+
+/* ---------------- Arranque ---------------- */
+async function arrancar(){
+  // 1. Lo último guardado en este aparato, para mostrar algo al instante (también sin internet).
+  var snap=await KV.get('snap');if(snap)aplicar(snap);
+  S.pend=(await KV.get('pend'))||[];
+  reaplicarDocs();
+  render();
+  // 2. ¿Dónde estamos?
+  if(!enTelefono()){
+    var mcp=await window.claude.use('mcp');
+    if(!mcp){S.sinFuente='Para leer tu hoja, abre esta página desde tu cuenta de Claude.';render();return}
+    S.fuente=FuenteClaude(mcp);
+  }else{
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+      navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='actualizar')sincronizar()});
+    }
+    var cfg=await KV.get('servidor');
+    if(!cfg||!cfg.url){S.view='conexion';render();return}
+    S.fuente=FuenteTelefono(cfg);
+  }
+  sincronizar();
+  window.addEventListener('online',function(){render();sincronizar()});
+  window.addEventListener('offline',render);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)sincronizar()});
+  setInterval(function(){if(!document.hidden)sincronizar()},60000);
+}
+arrancar();
+})();
+</script>
+
+</body>
+</html>
